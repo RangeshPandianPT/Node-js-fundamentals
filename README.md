@@ -149,6 +149,4 @@ Contributions are welcome\! If you find an error, want to improve an example, or
 RANGESHPANDIAN PT 
 rangeshpandian@mail.com
 
-## 9\. License
 
-This project is licensed under the **MIT License**. See the `LICENSE` file for details.
