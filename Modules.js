@@ -30,3 +30,22 @@ app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
 
+
+
+// Node.js Backend (server.js):
+// JavaScript
+const express = require('express');
+const app = express();
+const cors = require('cors');
+
+app.use(cors());
+
+app.get('/api/message', (req, res) => {
+  res.json({ message: 'Data from Node.js backend!' });
+});
+
+const PORT = 8080;
+app.listen(PORT, () => {
+  console.log(`Backend server listening on port ${PORT}`);
+});
+
