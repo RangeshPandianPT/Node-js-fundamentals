@@ -1,0 +1,14 @@
+{
+  "name": "node-js-fundamentals",
+  "version": "1.0.0",
+  "description": "Small Node.js fundamentals examples (Data, FS, Hello, Modules)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "example:fs": "node Fs.js",
+    "example:hello": "node Hello.js",
+    "example:modules": "node Modules.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
