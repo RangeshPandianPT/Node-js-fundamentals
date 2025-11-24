@@ -15,6 +15,7 @@ This repository focuses on **hands-on learning** through code examples, practice
 
 To get the most out of this learning path, you should have a solid understanding of fundamental JavaScript concepts.
 
+
 ### Essential JavaScript Knowledge:
 
   * **Syntax and Data Structures:** Variables (`var`, `let`, `const`), Data Types (Strings, Numbers, Objects, Arrays).
