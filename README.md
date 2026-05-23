@@ -97,12 +97,53 @@ node-js-learning-path/
 ├── 05-Express-Framework/
 │   ├── package.json
 │   ├── server.js
-│   └── routes/
-├── README.md
-├── .gitignore
-└── LICENSE
-```
+This small repository contains simple Node.js example files used for learning core concepts:
 
+- `Data.js` — in-memory data and helper functions (cleaned and exported as a module)
+- `Fs.js` — basic file system examples (creates `./docs` and `file.txt`)
+- `Hello.js` — timers and basic globals (`__dirname`, `__filename`)
+- `Modules.js` — demonstrates `require()` and some OS info (may reference express in the sample code)
+- `Http.js` — creates a basic HTTP server and handles basic routing
+- `Events.js` — demonstrates custom event emitters and listeners
+- `Path.js` — shows various methods of the path module for working with file paths
+- `Os.js` — provides examples of getting operating system info like memory, CPU, etc.
+- `index.js` — demo runner that uses `Data.js` (safe to run)
+
+How to run
+1. (Optional) initialize a git repo if not already:
+
+   git init
+   git add .
+   git commit -m "Initial commit: node-js-fundamentals examples"
+
+2. Run the demo:
+
+   npm start
+
+3. Run example files individually (they may have side-effects):
+
+   npm run example:fs
+   npm run example:hello
+   npm run example:modules
+
+Notes
+- `Modules.js` contains illustrative server code (Express) in comments — you don't need to install Express to use the demo runner `index.js`.
+- `Fs.js` will create a `docs/` folder and a `file.txt` file; `.gitignore` excludes `docs/` so it won't be committed.
+
+Pushing to GitHub
+1. Create a repository on GitHub (for example `node-js-fundamentals`).
+2. Add the remote and push:
+
+   git remote add origin <YOUR_REMOTE_URL>
+   git branch -M main
+   git push -u origin main
+
+Feel free to edit examples or ask me to add tests or convert examples to ES modules.
+  git push -u origin main
+
+Feel free to edit examples or ask me to add tests or convert examples to ES modules.
+
+>>>>>>> cd66af4 (Prepare node-js-fundamentals: cleaned Data.js, demo runner, package.json, docs)
 -----
 
 ## 6\. Usage & Examples

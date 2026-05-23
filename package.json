@@ -7,7 +7,11 @@
     "start": "node index.js",
     "example:fs": "node Fs.js",
     "example:hello": "node Hello.js",
-    "example:modules": "node Modules.js"
+    "example:modules": "node Modules.js",
+    "example:http": "node Http.js",
+    "example:events": "node Events.js",
+    "example:path": "node Path.js",
+    "example:os": "node Os.js"
   },
   "author": "",
   "license": "MIT"
