@@ -11,7 +11,11 @@
     "example:http": "node Http.js",
     "example:events": "node Events.js",
     "example:path": "node Path.js",
-    "example:os": "node Os.js"
+    "example:os": "node Os.js",
+    "example:streams": "node streams.js",
+    "example:buffer": "node Buffer.js",
+    "example:process": "node Process.js",
+    "example:promises": "node Promises.js"
   },
   "author": "",
   "license": "MIT"
