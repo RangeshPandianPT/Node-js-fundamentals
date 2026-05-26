@@ -139,11 +139,7 @@ Pushing to GitHub
    git push -u origin main
 
 Feel free to edit examples or ask me to add tests or convert examples to ES modules.
-  git push -u origin main
 
-Feel free to edit examples or ask me to add tests or convert examples to ES modules.
-
->>>>>>> cd66af4 (Prepare node-js-fundamentals: cleaned Data.js, demo runner, package.json, docs)
 -----
 
 ## 6\. Usage & Examples
