@@ -5,18 +5,27 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "example:fs": "node Fs.js",
-    "example:hello": "node Hello.js",
-    "example:modules": "node Modules.js",
-    "example:http": "node Http.js",
-    "example:events": "node Events.js",
-    "example:path": "node Path.js",
-    "example:os": "node Os.js",
-    "example:streams": "node streams.js",
-    "example:buffer": "node Buffer.js",
-    "example:process": "node Process.js",
-    "example:promises": "node Promises.js"
+    "dev": "nodemon 05-Express-Framework/server.js",
+    "example:fs": "node 02-Built-in-Modules/Fs.js",
+    "example:hello": "node 02-Built-in-Modules/Hello.js",
+    "example:modules": "node 02-Built-in-Modules/Modules.js",
+    "example:http": "node 02-Built-in-Modules/Http.js",
+    "example:events": "node 01-Core-Concepts/Events.js",
+    "example:path": "node 02-Built-in-Modules/Path.js",
+    "example:os": "node 02-Built-in-Modules/Os.js",
+    "example:streams": "node 04-Streams-Buffers/streams.js",
+    "example:buffer": "node 04-Streams-Buffers/Buffer.js",
+    "example:process": "node 02-Built-in-Modules/Process.js",
+    "example:promises": "node 01-Core-Concepts/Promises.js",
+    "example:npm": "node 03-NPM-Packages/npm_demo.js"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
