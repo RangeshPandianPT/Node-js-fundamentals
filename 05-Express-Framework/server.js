@@ -1,8 +1,12 @@
 const express = require('express');
-const { people, listPeople, addPerson, findByName } = require('../Data.js');
+const peopleRoutes = require('./routes/people');
+const logger = require('./middleware/logger');
 
 const app = express();
 const PORT = 3000;
+
+// Apply custom logger middleware
+app.use(logger);
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -12,31 +16,8 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Express.js API! Check out /api/people');
 });
 
-// GET all people
-app.get('/api/people', (req, res) => {
-    res.json(listPeople());
-});
-
-// GET a specific person by name
-app.get('/api/people/:name', (req, res) => {
-    const person = findByName(req.params.name);
-    if (!person) return res.status(404).send('Person not found.');
-    res.json(person);
-});
-
-// POST a new person
-app.post('/api/people', (req, res) => {
-    try {
-        const newPerson = addPerson({
-            name: req.body.name,
-            age: req.body.age,
-            city: req.body.city
-        });
-        res.status(201).json(newPerson);
-    } catch (e) {
-        res.status(400).send(e.message);
-    }
-});
+// Mount routes
+app.use('/api/people', peopleRoutes);
 
 // Start the server
 app.listen(PORT, () => {
