@@ -4,14 +4,35 @@ const PORT = 3000;
 
 // Create a basic HTTP server
 const server = http.createServer((req, res) => {
-  // Set the response HTTP header with HTTP status and Content type
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  
-  // Routing based on the URL
-  if (req.url === '/') {
+  // Routing based on the URL and Method
+  if (req.url === '/' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Welcome to the Node.js Fundamentals HTTP Server!\n');
-  } else if (req.url === '/about') {
+  } else if (req.url === '/about' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('This is the about page.\n');
+  } else if (req.url === '/api/data' && req.method === 'POST') {
+    let body = '';
+    
+    // Listen for data chunks
+    req.on('data', chunk => {
+      body += chunk.toString(); // Convert Buffer to string
+    });
+    
+    // Once all data is received
+    req.on('end', () => {
+      try {
+        const parsedData = JSON.parse(body);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          message: 'Data received successfully',
+          data: parsedData
+        }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+      }
+    });
   } else {
     // Handle 404
     res.writeHead(404, { 'Content-Type': 'text/plain' });
