@@ -17,15 +17,24 @@
     "example:buffer": "node 04-Streams-Buffers/Buffer.js",
     "example:process": "node 02-Built-in-Modules/Process.js",
     "example:promises": "node 01-Core-Concepts/Promises.js",
-    "example:npm": "node 03-NPM-Packages/npm_demo.js"
+    "example:npm": "node 03-NPM-Packages/npm_demo.js",
+    "start:sqlite": "node 07-Database-Integration/sqlite-crud-api.js",
+    "start:auth": "node 08-Authentication/express-auth-api.js",
+    "test": "jest"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "chalk": "^4.1.2",
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

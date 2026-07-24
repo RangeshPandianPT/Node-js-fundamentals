@@ -69,14 +69,15 @@ The repository is organized into directories, each corresponding to a fundamenta
 
 | Directory | Topic | Key Concepts Covered |
 | :--- | :--- | :--- |
-| `01-Core-Concepts` | **Asynchronous Programming** | Event Loop, Callbacks, **Promises**, `async/await`, Non-Blocking I/O. |
-| `02-Built-in-Modules` | **Standard Library** | `http` (creating a basic server), `fs` (File System), `path`, `os`, `util`. |
-| `03-NPM-Packages` | **Package Management** | `package.json`, dependencies, `npm install`, **scripting**, global vs. local packages. |
-| `04-Streams-Buffers` | **Data Handling** | **Buffers** (binary data), **Streams** (Readable, Writable, Duplex), efficient large file handling. |
-| `05-Express-Framework` | **Web Servers & APIs** | Setting up **Express.js**, Routing, Middleware, Request/Response cycle. |
-| `06-Database-Integration` | **Persistence Layer** | Connecting to **MongoDB** (via Mongoose) and/or **SQL** (via Sequelize/Prisma), CRUD operations. |
-| `07-Authentication` | **Security** | **JWT (JSON Web Tokens)**, Session-based auth, Hashing passwords (Bcrypt). |
-| `08-Advanced-Topics` | **Scaling & Architecture** | Unit Testing (Jest), Deployment concepts, Environment Variables (`dotenv`). |
+| `01-Core-Concepts` | **Fundamentals** | Event Loop, Modules, Globals. |
+| `02-Built-in-Modules` | **Standard Library** | `http` (creating a basic server), `fs` (File System), `path`, `os`, `events`. |
+| `03-NPM-Packages` | **Package Management** | `package.json`, dependencies, `npm install`, **scripting**. |
+| `04-Streams-Buffers` | **Data Handling** | **Buffers** (binary data), **Streams** (Readable, Writable), large file handling. |
+| `05-Express-Framework` | **Web Servers & APIs** | Setting up **Express.js**, Routing, Controllers, Middleware. |
+| `06-Asynchronous-Programming`| **Async JavaScript** | Callbacks, **Promises**, `async/await`, Non-Blocking I/O. |
+| `07-Database-Integration` | **Persistence Layer** | Connecting to **MongoDB** (via Mongoose) and/or **SQL**, CRUD operations. |
+| `08-Authentication` | **Security** | **JWT (JSON Web Tokens)**, Session-based auth, Hashing passwords (Bcrypt). |
+| `09-Advanced-Topics` | **Scaling & Architecture** | Unit Testing (Jest), Deployment concepts, Environment Variables. |
 
 -----
 
