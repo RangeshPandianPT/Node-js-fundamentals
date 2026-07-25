@@ -1,0 +1,10 @@
+{
+  "name": "esm-demo",
+  "version": "1.0.0",
+  "description": "Demonstration of ECMAScript Modules (ESM) in Node.js",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
