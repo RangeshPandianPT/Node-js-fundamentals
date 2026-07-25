@@ -20,6 +20,12 @@
     "example:npm": "node 03-NPM-Packages/npm_demo.js",
     "start:sqlite": "node 07-Database-Integration/sqlite-crud-api.js",
     "start:auth": "node 08-Authentication/express-auth-api.js",
+    "start:realtime": "node 10-Realtime-WebSockets/server.js",
+    "start:errors": "node 11-Error-Handling-Logging/server.js",
+    "start:cluster": "node 12-Performance-Scaling/cluster-server.js",
+    "start:workers": "node 12-Performance-Scaling/worker-threads-demo.js",
+    "start:multer": "node 13-File-Uploads-Multer/server.js",
+    "example:esm": "node 14-ES-Modules-ESM/index.js",
     "test": "jest"
   },
   "author": "",
@@ -30,7 +36,10 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "sqlite3": "^6.0.1"
+    "multer": "^2.2.0",
+    "socket.io": "^4.8.3",
+    "sqlite3": "^6.0.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "jest": "^30.4.2",
