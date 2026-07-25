@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Media Cloud | Multer Uploads</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 80% 20%, #151921 0%, #080a0f 100%);
+      --card-bg: rgba(22, 27, 34, 0.75);
+      --card-border: rgba(48, 54, 61, 0.6);
+      --primary: #a371f7;
+      --primary-hover: #b88bf8;
+      --primary-glow: rgba(163, 113, 247, 0.3);
+      --accent: #3fb950;
+      --error: #f85149;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a371f7 0%, #58a6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 950px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--card-border);
+      border-radius: 14px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(13, 17, 23, 0.4);
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(163, 113, 247, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .icon-upload {
+      font-size: 2.5rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+
+    .dz-text {
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .dz-subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.85rem 1.5rem;
+      border-radius: 10px;
+      font-family: var(--font-main);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .result-box {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-box.success {
+      background: rgba(63, 185, 80, 0.15);
+      border: 1px solid rgba(63, 185, 80, 0.4);
+      color: #7ee787;
+    }
+
+    .result-box.error {
+      background: rgba(248, 81, 73, 0.15);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: #ff7b72;
+    }
+
+    .preview-img {
+      max-width: 100%;
+      max-height: 160px;
+      border-radius: 8px;
+      margin-top: 0.8rem;
+      border: 1px solid var(--card-border);
+      display: block;
+    }
+
+    .file-list {
+      margin-top: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .file-item {
+      background: rgba(13, 17, 23, 0.8);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Node.js Media Cloud</h1>
+    <p>Secure multipart form uploads with MIME filtering & size limit validation</p>
+  </header>
+
+  <main class="container">
+    <!-- Single Avatar Upload -->
+    <section class="card">
+      <h2 class="card-title">🖼️ Single Avatar Upload</h2>
+      <p class="card-desc">Restricted to images (JPEG, PNG, WEBP, GIF) under 2MB.</p>
+      
+      <form id="avatar-form">
+        <div class="dropzone" id="dz-avatar">
+          <span class="icon-upload">☁️</span>
+          <div class="dz-text">Drag & Drop Avatar Image Here</div>
+          <div class="dz-subtext" id="avatar-filename">or click to browse from device</div>
+          <input type="file" id="avatar-input" name="avatar" accept="image/*" required>
+        </div>
+        <button type="submit">Upload Avatar ✨</button>
+      </form>
+
+      <div class="result-box" id="avatar-result"></div>
+    </section>
+
+    <!-- Multiple Documents Upload -->
+    <section class="card">
+      <h2 class="card-title">📑 Multi-Document Upload</h2>
+      <p class="card-desc">Upload up to 5 files (PDF, DOCX, TXT, Images). Max 10MB each.</p>
+      
+      <form id="docs-form">
+        <div class="dropzone" id="dz-docs">
+          <span class="icon-upload">📂</span>
+          <div class="dz-text">Drag & Drop Documents Here</div>
+          <div class="dz-subtext" id="docs-filename">or click to select up to 5 files</div>
+          <input type="file" id="docs-input" name="documents" multiple required>
+        </div>
+        <button type="submit" style="background: #238636;">Upload Documents 🚀</button>
+      </form>
+
+      <div class="result-box" id="docs-result"></div>
+    </section>
+  </main>
+
+  <script>
+    // Avatar Upload Handler
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarFilename = document.getElementById('avatar-filename');
+    const avatarForm = document.getElementById('avatar-form');
+    const avatarResult = document.getElementById('avatar-result');
+
+    avatarInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) {
+        avatarFilename.textContent = `Selected: ${e.target.files[0].name}`;
+        avatarFilename.style.color = '#a371f7';
+      }
+    });
+
+    avatarForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(avatarForm);
+      avatarResult.style.display = 'block';
+      avatarResult.className = 'result-box';
+      avatarResult.textContent = 'Uploading to server...';
+
+      try {
+        const response = await fetch('/api/upload/avatar', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          avatarResult.className = 'result-box success';
+          avatarResult.innerHTML = `
+            <strong>${data.message}</strong><br>
+            <span style="font-size: 0.8rem; color: #8b949e;">Saved as: ${data.file.filename} (${data.file.size})</span>
+            <img src="${data.file.url}" alt="Uploaded Avatar" class="preview-img">
+          `;
+          avatarForm.reset();
+          avatarFilename.textContent = 'or click to browse from device';
+          avatarFilename.style.color = 'var(--text-muted)';
+        } else {
+          avatarResult.className = 'result-box error';
+          avatarResult.textContent = `❌ ${data.message}`;
+        }
+      } catch (err) {
+        avatarResult.className = 'result-box error';
+        avatarResult.textContent = `❌ Network error occurred while uploading.`;
+      }
+    });
+
+    // Multi-Document Upload Handler
+    const docsInput = document.getElementById('docs-input');
+    const docsFilename = document.getElementById('docs-filename');
+    const docsForm = document.getElementById('docs-form');
+    const docsResult = document.getElementById('docs-result');
+
+    docsInput.addEventListener('change', (e) => {
+      const count = e.target.files.length;
+      if (count > 0) {
+        docsFilename.textContent = `Selected: ${count} file(s)`;
+        docsFilename.style.color = '#3fb950';
+      }
+    });
+
+    docsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(docsForm);
+      docsResult.style.display = 'block';
+      docsResult.className = 'result-box';
+      docsResult.textContent = 'Uploading files to server...';
+
+      try {
+        const response = await fetch('/api/upload/documents', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          docsResult.className = 'result-box success';
+          let filesHtml = `<div class="file-list">`;
+          data.files.forEach(f => {
+            filesHtml += `<div class="file-item"><span>📄 ${f.originalName}</span><span>${f.size}</span></div>`;
+          });
+          filesHtml += `</div>`;
+          
+          docsResult.innerHTML = `<strong>${data.message}</strong>${filesHtml}`;
+          docsForm.reset();
+          docsFilename.textContent = 'or click to select up to 5 files';
+          docsFilename.style.color = 'var(--text-muted)';
+        } else {
+          docsResult.className = 'result-box error';
+          docsResult.textContent = `❌ ${data.message}`;
+        }
+      } catch (err) {
+        docsResult.className = 'result-box error';
+        docsResult.textContent = `❌ Network error occurred while uploading.`;
+      }
+    });
+  </script>
+</body>
+</html>
