@@ -76,86 +76,82 @@ The repository is organized into directories, each corresponding to a fundamenta
 | `05-Express-Framework` | **Web Servers & APIs** | Setting up **Express.js**, Routing, Controllers, Middleware. |
 | `06-Asynchronous-Programming`| **Async JavaScript** | Callbacks, **Promises**, `async/await`, Non-Blocking I/O. |
 | `07-Database-Integration` | **Persistence Layer** | Connecting to **MongoDB** (via Mongoose) and/or **SQL**, CRUD operations. |
-| `08-Authentication` | **Security** | **JWT (JSON Web Tokens)**, Session-based auth, Hashing passwords (Bcrypt). |
+| `08-Authentication` | **Security** | **JWT (JSON Web Tokens)**, Session-based auth, Hashing passwords (Bcrypt), Integration Tests. |
 | `09-Advanced-Topics` | **Scaling & Architecture** | Unit Testing (Jest), Deployment concepts, Environment Variables. |
+| `10-Realtime-WebSockets` | **Real-Time Communication** | Bi-directional communication, **Socket.io**, live server telemetry broadcasting, chat rooms. |
+| `11-Error-Handling-Logging` | **Production Resilience** | Custom `AppError` classes, global Express error middleware, **Winston** structured logging, graceful shutdown. |
+| `12-Performance-Scaling` | **Multi-Core & Worker Threads** | Load balancing across CPU cores with `cluster`, CPU-heavy task offloading with `worker_threads`. |
+| `13-File-Uploads-Multer` | **Media & File Processing** | Secure multipart form uploads using **Multer**, MIME type filtering, size validation, disk storage. |
+| `14-ES-Modules-ESM` | **Modern JS Modules** | Modern `import`/`export` syntax, top-level `await`, dynamic imports, recreating `__dirname`. |
 
 -----
 
 ## 5\. Project Structure
 
-The structure is designed for easy navigation:
+The repository is organized for easy navigation and hands-on testing:
 
 ```
-node-js-learning-path/
-├── 01-Core-Concepts/
-│   ├── callback_example.js
-│   ├── promises_exercise.js
-│   └── ...
-├── 02-Built-in-Modules/
-│   ├── http_server.js
-│   ├── file_reader.js
-│   └── ...
-├── 05-Express-Framework/
-│   ├── package.json
-│   ├── server.js
-This small repository contains simple Node.js example files used for learning core concepts:
-
-- `Data.js` — in-memory data and helper functions (cleaned and exported as a module)
-- `Fs.js` — basic file system examples (creates `./docs` and `file.txt`)
-- `Hello.js` — timers and basic globals (`__dirname`, `__filename`)
-- `Modules.js` — demonstrates `require()` and some OS info (may reference express in the sample code)
-- `Http.js` — creates a basic HTTP server and handles basic routing
-- `Events.js` — demonstrates custom event emitters and listeners
-- `Path.js` — shows various methods of the path module for working with file paths
-- `Os.js` — provides examples of getting operating system info like memory, CPU, etc.
-- `index.js` — demo runner that uses `Data.js` (safe to run)
-
-How to run
-1. (Optional) initialize a git repo if not already:
-
-   git init
-   git add .
-   git commit -m "Initial commit: node-js-fundamentals examples"
-
-2. Run the demo:
-
-   npm start
-
-3. Run example files individually (they may have side-effects):
-
-   npm run example:fs
-   npm run example:hello
-   npm run example:modules
-
-Notes
-- `Modules.js` contains illustrative server code (Express) in comments — you don't need to install Express to use the demo runner `index.js`.
-- `Fs.js` will create a `docs/` folder and a `file.txt` file; `.gitignore` excludes `docs/` so it won't be committed.
-
-Pushing to GitHub
-1. Create a repository on GitHub (for example `node-js-fundamentals`).
-2. Add the remote and push:
-
-   git remote add origin <YOUR_REMOTE_URL>
-   git branch -M main
-   git push -u origin main
-
-Feel free to edit examples or ask me to add tests or convert examples to ES modules.
+node-js-fundamentals/
+├── 01-Core-Concepts/          # Event loop, Promises, custom Event Emitters
+├── 02-Built-in-Modules/       # Fs, Http, Os, Path, Crypto, Child Process
+├── 03-NPM-Packages/           # Package dependencies and npm scripts
+├── 04-Streams-Buffers/        # Buffer handling and Stream processing
+├── 05-Express-Framework/      # Routing, middleware, and controllers
+├── 06-Asynchronous-Programming/ # Callbacks, Promises, and Async/Await
+├── 07-Database-Integration/   # SQLite and Mongoose CRUD APIs
+├── 08-Authentication/         # JWT Auth API, Bcrypt hashing, and Jest/Supertest suite
+├── 09-Advanced-Topics/        # Environment variables (.env) and Jest unit testing
+├── 10-Realtime-WebSockets/    # Express + Socket.io real-time chat & server telemetry
+├── 11-Error-Handling-Logging/ # Winston logger, operational error classes, graceful shutdown
+├── 12-Performance-Scaling/    # Load-balanced cluster server and worker_threads offloading
+├── 13-File-Uploads-Multer/    # Secure avatar & document uploads with Multer validation
+├── 14-ES-Modules-ESM/         # Modern ES Modules (type: module), top-level await demo
+├── uploads/                   # Uploaded media storage directory
+├── logs/                      # Winston error and combined log files
+├── index.js                   # Demo runner for basic fundamentals
+└── package.json               # Configured with npm scripts and Jest testing
+```
 
 -----
 
-## 6\. Usage & Examples
+## 6\. Running Examples & Production Modules
 
-Each topic directory contains examples that demonstrate the concept. To run any file, use the `node` command from your terminal:
+You can run any module or start any production server using the built-in npm scripts:
 
+### 🧪 Run Automated Tests
 ```bash
-# Example 1: Run a basic HTTP server file
-cd 02-Built-in-Modules
-node http_server.js
-# The server will likely start at http://localhost:3000
+# Execute Jest & Supertest suites across authentication and advanced topics
+npm test
+```
 
-# Example 2: Run an async/await file
-cd 01-Core-Concepts
-node async_await_demo.js
+### 🚀 Launch Production Servers (Sections 10–14)
+```bash
+# Section 10: Real-Time WebSocket Hub (http://localhost:3001)
+npm run start:realtime
+
+# Section 11: Error Handling & Winston Logging Demo (http://localhost:3002)
+npm run start:errors
+
+# Section 12: Load-Balanced Cluster Server (http://localhost:3003)
+npm run start:cluster
+
+# Section 12: Worker Threads Offloading Demo (http://localhost:3004)
+npm run start:workers
+
+# Section 13: Multer File Upload Cloud UI (http://localhost:3005)
+npm run start:multer
+
+# Section 14: Modern ES Modules & Top-Level Await Demo
+npm run example:esm
+```
+
+### 📚 Run Basic Learning Examples
+```bash
+npm run example:fs
+npm run example:http
+npm run example:promises
+npm run start:sqlite
+npm run start:auth
 ```
 
 -----

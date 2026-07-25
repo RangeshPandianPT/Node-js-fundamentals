@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Real-Time Hub | Socket.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 15% 50%, #0d1117 0%, #030507 100%);
+      --card-bg: rgba(22, 27, 34, 0.75);
+      --card-border: rgba(48, 54, 61, 0.6);
+      --primary: #58a6ff;
+      --primary-glow: rgba(88, 166, 255, 0.25);
+      --accent: #238636;
+      --accent-hover: #2ea043;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #58a6ff 0%, #3fb950 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .dashboard {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.8rem;
+    }
+
+    /* Stats Section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .stat-item {
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid rgba(48, 54, 61, 0.4);
+      border-radius: 12px;
+      padding: 1rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .stat-unit {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* Chat Section */
+    .chat-container {
+      height: 450px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .message {
+      background: rgba(13, 17, 23, 0.6);
+      border-left: 3px solid var(--primary);
+      padding: 0.8rem 1rem;
+      border-radius: 0 10px 10px 0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .msg-author {
+      font-weight: 600;
+      color: #7ee787;
+      font-size: 0.95rem;
+    }
+
+    .msg-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .msg-body {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .chat-form {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.2rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex: 1;
+      gap: 0.5rem;
+    }
+
+    input[type="text"] {
+      background: #0d1117;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    #username-input {
+      width: 140px;
+    }
+
+    #message-input {
+      flex: 1;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: rgba(35, 134, 54, 0.2);
+      color: #3fb950;
+      border: 1px solid rgba(63, 185, 80, 0.4);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 8px #3fb950;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="margin-bottom: 0.5rem;">
+      <span class="status-badge"><span class="status-dot"></span><span id="connection-status">Connected to Node.js Hub</span></span>
+    </div>
+    <h1>Real-Time WebSocket Hub</h1>
+    <p>Bi-directional event communication powered by Express & Socket.io</p>
+  </header>
+
+  <main class="dashboard">
+    <!-- Server Telemetry & Stats -->
+    <section class="card">
+      <h2 class="card-title">⚡ Live Server Telemetry</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Active Connections</div>
+          <div class="stat-value" id="stat-connections">1 <span class="stat-unit">client(s)</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Server Uptime</div>
+          <div class="stat-value" id="stat-uptime">0 <span class="stat-unit">sec</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Memory Usage (RSS)</div>
+          <div class="stat-value" id="stat-rss">0.00 <span class="stat-unit">MB</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Heap Used</div>
+          <div class="stat-value" id="stat-heap">0.00 <span class="stat-unit">MB</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Last Telemetry Sync</div>
+          <div class="stat-value" id="stat-time" style="font-size: 1.1rem; color: var(--text-muted);">Syncing...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-Time Chat Room -->
+    <section class="card">
+      <h2 class="card-title">💬 Live Dev Broadcast Channel</h2>
+      <div class="chat-container">
+        <div class="messages-area" id="messages-list">
+          <div class="message" style="border-left-color: #8b949e;">
+            <div class="msg-header">
+              <span class="msg-author" style="color: #58a6ff;">System Bot</span>
+              <span class="msg-time">Just now</span>
+            </div>
+            <div class="msg-body">Connecting to Socket.io server...</div>
+          </div>
+        </div>
+
+        <form class="chat-form" id="chat-form">
+          <div class="input-group">
+            <input type="text" id="username-input" placeholder="Your Name" value="DevUser" required maxlength="20">
+            <input type="text" id="message-input" placeholder="Type a message to broadcast across all clients..." required autocomplete="off">
+          </div>
+          <button type="submit">Broadcast 🚀</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const messagesList = document.getElementById('messages-list');
+    const chatForm = document.getElementById('chat-form');
+    const usernameInput = document.getElementById('username-input');
+    const messageInput = document.getElementById('message-input');
+
+    const statConnections = document.getElementById('stat-connections');
+    const statUptime = document.getElementById('stat-uptime');
+    const statRss = document.getElementById('stat-rss');
+    const statHeap = document.getElementById('stat-heap');
+    const statTime = document.getElementById('stat-time');
+    const connectionStatus = document.getElementById('connection-status');
+
+    function appendMessage(author, text, time, color = '#7ee787') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.style.borderLeftColor = color;
+      msgDiv.innerHTML = `
+        <div class="msg-header">
+          <span class="msg-author" style="color: ${color};">${author}</span>
+          <span class="msg-time">${time}</span>
+        </div>
+        <div class="msg-body">${text}</div>
+      `;
+      messagesList.appendChild(msgDiv);
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    socket.on('connect', () => {
+      connectionStatus.textContent = `Connected (${socket.id.slice(0, 6)})`;
+    });
+
+    socket.on('welcome', (data) => {
+      messagesList.innerHTML = '';
+      appendMessage('⚡ Hub System', data.message, new Date().toLocaleTimeString(), '#58a6ff');
+      data.history.forEach(msg => {
+        appendMessage(msg.username, msg.text, msg.timestamp);
+      });
+    });
+
+    socket.on('connections-update', (data) => {
+      statConnections.innerHTML = `${data.count} <span class="stat-unit">client(s)</span>`;
+    });
+
+    socket.on('server-stats', (stats) => {
+      statUptime.innerHTML = `${stats.uptime} <span class="stat-unit">sec</span>`;
+      statRss.innerHTML = `${stats.rss} <span class="stat-unit">MB</span>`;
+      statHeap.innerHTML = `${stats.heapUsed} <span class="stat-unit">MB</span>`;
+      statTime.textContent = stats.timestamp;
+    });
+
+    socket.on('chat-message', (data) => {
+      const isMe = data.id === socket.id;
+      const color = isMe ? '#58a6ff' : '#d2a8ff';
+      appendMessage(data.username + (isMe ? ' (You)' : ''), data.text, data.timestamp, color);
+    });
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      const username = usernameInput.value.trim() || 'Anonymous';
+      if (text) {
+        socket.emit('chat-message', { username, text });
+        messageInput.value = '';
+        messageInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>
