@@ -83,6 +83,7 @@ The repository is organized into directories, each corresponding to a fundamenta
 | `12-Performance-Scaling` | **Multi-Core & Worker Threads** | Load balancing across CPU cores with `cluster`, CPU-heavy task offloading with `worker_threads`. |
 | `13-File-Uploads-Multer` | **Media & File Processing** | Secure multipart form uploads using **Multer**, MIME type filtering, size validation, disk storage. |
 | `14-ES-Modules-ESM` | **Modern JS Modules** | Modern `import`/`export` syntax, top-level `await`, dynamic imports, recreating `__dirname`. |
+| `15-GraphQL-Integration` | **GraphQL APIs** | Setting up **Apollo Server**, typed schemas (`typeDefs`), and data **resolvers**. |
 
 -----
 
@@ -106,6 +107,7 @@ node-js-fundamentals/
 ├── 12-Performance-Scaling/    # Load-balanced cluster server and worker_threads offloading
 ├── 13-File-Uploads-Multer/    # Secure avatar & document uploads with Multer validation
 ├── 14-ES-Modules-ESM/         # Modern ES Modules (type: module), top-level await demo
+├── 15-GraphQL-Integration/    # Apollo Server Express setup, schemas, and resolvers
 ├── uploads/                   # Uploaded media storage directory
 ├── logs/                      # Winston error and combined log files
 ├── index.js                   # Demo runner for basic fundamentals
@@ -143,6 +145,9 @@ npm run start:multer
 
 # Section 14: Modern ES Modules & Top-Level Await Demo
 npm run example:esm
+
+# Section 15: GraphQL API Server (http://localhost:4000/graphql)
+npm run start:graphql
 ```
 
 ### 📚 Run Basic Learning Examples
