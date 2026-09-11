@@ -26,19 +26,25 @@
     "start:workers": "node 12-Performance-Scaling/worker-threads-demo.js",
     "start:multer": "node 13-File-Uploads-Multer/server.js",
     "example:esm": "node 14-ES-Modules-ESM/index.js",
+    "start:graphql": "node 15-GraphQL-Integration/server.js",
     "test": "jest"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@apollo/server": "^4.13.0",
     "bcrypt": "^6.0.0",
     "chalk": "^4.1.2",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "graphql": "^16.14.2",
+    "graphql-tag": "^2.12.7",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "socket.io": "^4.8.3",
     "sqlite3": "^6.0.1",
+    "tslib": "^2.8.1",
     "winston": "^3.19.0"
   },
   "devDependencies": {
