@@ -27,6 +27,7 @@
     "start:multer": "node 13-File-Uploads-Multer/server.js",
     "example:esm": "node 14-ES-Modules-ESM/index.js",
     "start:graphql": "node 15-GraphQL-Integration/server.js",
+    "start:cache": "node 16-Caching-Strategies/server.js",
     "test": "jest"
   },
   "author": "",
@@ -40,6 +41,7 @@
     "express": "^5.2.1",
     "graphql": "^16.14.2",
     "graphql-tag": "^2.12.7",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "socket.io": "^4.8.3",
