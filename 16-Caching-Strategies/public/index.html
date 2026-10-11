@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Caching Strategies & Telemetry Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-surface: rgba(22, 28, 45, 0.7);
+      --bg-surface-elevated: rgba(30, 41, 69, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --emerald-glow: #10b981;
+      --amber-glow: #f59e0b;
+      --rose-glow: #f43f5e;
+      --cyan-glow: #06b6d4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 15%, #131b31 0%, #0a0e17 60%),
+                  radial-gradient(circle at 85% 85%, #181329 0%, #0a0e17 60%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .badge-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .badge-section {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+    }
+
+    .badge-engine {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    .engine-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    /* Live Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-glow);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+      opacity: 0.7;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Main Dashboard Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 960px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .action-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--accent-primary);
+      transform: translateX(4px);
+    }
+
+    .action-btn:active {
+      transform: scale(0.99);
+    }
+
+    .action-btn.danger:hover {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--rose-glow);
+    }
+
+    .btn-desc {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Live Response Inspector */
+    .inspector-box {
+      background: #060910;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      max-height: 480px;
+      position: relative;
+    }
+
+    .latency-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+
+    .latency-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hit-tag {
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .hit-tag.hit {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .hit-tag.miss {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    /* New Product Form */
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .input-field {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .submit-btn {
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-bar">
+        <span class="badge badge-section">Section 16: Performance Scaling</span>
+        <span class="badge badge-engine">
+          <span class="engine-pulse"></span>
+          <span id="active-engine">In-Memory Store</span>
+        </span>
+      </div>
+      <h1>Caching Strategies & Cache-Aside Telemetry</h1>
+      <p class="subtitle">
+        Explore Cache-Aside (Lazy Loading), Express route-level caching middleware, live TTL expiration, and proactive cache invalidation with instant latency comparison.
+      </p>
+    </header>
+
+    <!-- Telemetry Cards -->
+    <div class="telemetry-grid">
+      <div class="stat-card">
+        <span class="stat-label">Cache Hits</span>
+        <span class="stat-value" id="stat-hits" style="color: #34d399;">0</span>
+        <span class="stat-hint">Served instantaneously</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Cache Misses</span>
+        <span class="stat-value" id="stat-misses" style="color: #fbbf24;">0</span>
+        <span class="stat-hint">Evaluated against simulated DB</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Hit Ratio</span>
+        <span class="stat-value" id="stat-ratio" style="color: #a5b4fc;">0.0%</span>
+        <span class="stat-hint">Traffic served from cache</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active Keys</span>
+        <span class="stat-value" id="stat-keys" style="color: #38bdf8;">0</span>
+        <span class="stat-hint">Keys alive in store</span>
+      </div>
+    </div>
+
+    <div class="dashboard-layout">
+      <!-- Action Controls -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">⚡ Interactive Benchmarks</h2>
+          <button id="btn-flush" class="badge" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #fda4af; cursor: pointer;">
+            Flush Cache
+          </button>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-fetch-products" class="action-btn">
+            <div>
+              <div>1. Fetch All Products (Cached 30s)</div>
+              <div class="btn-desc">1st click: ~500ms (DB query). 2nd click: &lt;2ms (Cache Hit).</div>
+            </div>
+            <span>GET ➔</span>
+          </button>
+
+          <button id="btn-fetch-product-1" class="action-btn">
+            <div>
+              <div>2. Fetch Product #1 (MacBook Pro)</div>
+              <div class="btn-desc">Tests individual key caching: <code>/api/products/1</code></div>
+            </div>
+            <span>GET ➔</span>
+          </button>
+
+          <button id="btn-fibonacci" class="action-btn">
+            <div>
+              <div>3. Heavy CPU Fibonacci (n = 37)</div>
+              <div class="btn-desc">Caches CPU-heavy computation results for 120s.</div>
+            </div>
+            <span>CALC ➔</span>
+          </button>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+          <h3 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem;">
+            4. Invalidate Cache with Mutation
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Adding a product proactively purges matching cache keys so subsequent requests receive fresh data.
+          </p>
+          <form id="product-form" class="form-row">
+            <input type="text" id="prod-name" class="input-field" placeholder="Item name" required value="AirPods Max 2">
+            <input type="text" id="prod-cat" class="input-field" placeholder="Category" value="Audio">
+            <input type="number" id="prod-price" class="input-field" placeholder="Price" required value="549">
+            <button type="submit" class="submit-btn">+ Add</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Live Inspector & Response Viewer -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">🔍 Live Response Inspector</h2>
+          <span id="response-status" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted);">
+            Ready
+          </span>
+        </div>
+
+        <div class="latency-banner">
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Execution Time</div>
+            <div class="latency-val" id="latency-display">-- ms</div>
+          </div>
+          <div id="cache-badge" class="hit-tag miss" style="display: none;">MISS</div>
+        </div>
+
+        <div class="inspector-box" id="inspector-output">
+          <span style="color: #64748b;">// Click any action on the left to fire a live API request...</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Node.js Learning Path &bull; Section 16: Caching Strategies (Redis & In-Memory Fallback)
+    </footer>
+  </div>
+
+  <script>
+    const statHits = document.getElementById('stat-hits');
+    const statMisses = document.getElementById('stat-misses');
+    const statRatio = document.getElementById('stat-ratio');
+    const statKeys = document.getElementById('stat-keys');
+    const activeEngine = document.getElementById('active-engine');
+    const latencyDisplay = document.getElementById('latency-display');
+    const cacheBadge = document.getElementById('cache-badge');
+    const inspectorOutput = document.getElementById('inspector-output');
+    const responseStatus = document.getElementById('response-status');
+
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/cache/stats');
+        const json = await res.json();
+        if (json.status === 'success') {
+          const { engine, hits, misses, hitRatio, keysCount } = json.stats;
+          statHits.textContent = hits;
+          statMisses.textContent = misses;
+          statRatio.textContent = hitRatio;
+          statKeys.textContent = keysCount;
+          activeEngine.textContent = engine === 'redis' ? 'Redis Instance' : 'In-Memory Store (Active)';
+        }
+      } catch (err) {
+        console.error('Failed to update stats:', err);
+      }
+    }
+
+    async function executeRequest(url, method = 'GET', body = null) {
+      const startTime = performance.now();
+      responseStatus.textContent = 'Fetching...';
+      responseStatus.style.color = '#fbbf24';
+
+      try {
+        const options = { method };
+        if (body) {
+          options.headers = { 'Content-Type': 'application/json' };
+          options.body = JSON.stringify(body);
+        }
+
+        const res = await fetch(url, options);
+        const duration = Math.round(performance.now() - startTime);
+        const cacheHeader = res.headers.get('x-cache') || 'N/A';
+        const responseTimeHeader = res.headers.get('x-response-time') || `${duration}ms`;
+        const data = await res.json();
+
+        // Update latency UI
+        latencyDisplay.textContent = responseTimeHeader;
+        responseStatus.textContent = `HTTP ${res.status} OK`;
+        responseStatus.style.color = res.ok ? '#34d399' : '#f43f5e';
+
+        if (cacheHeader === 'HIT') {
+          cacheBadge.style.display = 'inline-block';
+          cacheBadge.className = 'hit-tag hit';
+          cacheBadge.textContent = 'CACHE HIT ⚡';
+        } else if (cacheHeader === 'MISS') {
+          cacheBadge.style.display = 'inline-block';
+          cacheBadge.className = 'hit-tag miss';
+          cacheBadge.textContent = 'CACHE MISS 🐢';
+        } else {
+          cacheBadge.style.display = 'none';
+        }
+
+        // Render response payload
+        inspectorOutput.innerHTML = `
+<span style="color: #60a5fa;">// URL:</span> ${url}
+<span style="color: #60a5fa;">// Headers:</span>
+  X-Cache: <strong style="color: ${cacheHeader === 'HIT' ? '#34d399' : '#fbbf24'}">${cacheHeader}</strong>
+  X-Response-Time: ${responseTimeHeader}
+
+<span style="color: #a78bfa;">// Payload:</span>
+${JSON.stringify(data, null, 2)}
+        `.trim();
+
+        await updateStats();
+      } catch (err) {
+        responseStatus.textContent = 'Error';
+        responseStatus.style.color = '#f43f5e';
+        inspectorOutput.textContent = 'Request failed: ' + err.message;
+      }
+    }
+
+    // Event listeners
+    document.getElementById('btn-fetch-products').addEventListener('click', () => {
+      executeRequest('/api/products');
+    });
+
+    document.getElementById('btn-fetch-product-1').addEventListener('click', () => {
+      executeRequest('/api/products/1');
+    });
+
+    document.getElementById('btn-fibonacci').addEventListener('click', () => {
+      executeRequest('/api/fibonacci?n=37&useCache=true');
+    });
+
+    document.getElementById('btn-flush').addEventListener('click', async () => {
+      await executeRequest('/api/cache/flush', 'POST');
+    });
+
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('prod-name').value;
+      const category = document.getElementById('prod-cat').value;
+      const price = parseFloat(document.getElementById('prod-price').value);
+
+      await executeRequest('/api/products', 'POST', { name, category, price, inStock: true });
+    });
+
+    // Initial stats load
+    updateStats();
+  </script>
+</body>
+</html>
