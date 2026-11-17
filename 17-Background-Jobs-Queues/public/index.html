@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Background Job Queues & Worker Processing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-surface: rgba(22, 28, 45, 0.7);
+      --bg-surface-elevated: rgba(30, 41, 69, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --emerald-glow: #10b981;
+      --amber-glow: #f59e0b;
+      --rose-glow: #f43f5e;
+      --cyan-glow: #06b6d4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 15%, #131b31 0%, #0a0e17 60%),
+                  radial-gradient(circle at 85% 85%, #181329 0%, #0a0e17 60%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .badge-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .badge-section {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+    }
+
+    .badge-live {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 800px;
+      line-height: 1.5;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .kpi-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #fff;
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    /* Control & Action Bar */
+    .action-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.65rem 1.15rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-warning {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+    }
+    .btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fda4af;
+    }
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.25);
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .preset-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      text-align: left;
+    }
+
+    .preset-card:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    .preset-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .preset-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Main Content Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 980px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-WAITING {
+      background: rgba(148, 163, 184, 0.15);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .status-ACTIVE {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.5);
+    }
+
+    .status-RETRYING {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-COMPLETED {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .status-FAILED {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.5);
+    }
+
+    .priority-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .priority-high { background: rgba(244, 63, 94, 0.2); color: #fda4af; }
+    .priority-normal { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
+    .priority-low { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+
+    /* Progress Bar */
+    .progress-bar-wrap {
+      width: 100px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.3rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Live Event Log Console */
+    .log-console {
+      background: #06090e;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-line {
+      line-height: 1.4;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .log-time { color: #64748b; }
+    .log-info { color: #38bdf8; }
+    .log-success { color: #4ade80; }
+    .log-warn { color: #facc15; }
+    .log-error { color: #f87171; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+    }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      max-width: 600px;
+      width: 100%;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    pre.json-view {
+      background: #080c14;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #93c5fd;
+      overflow-x: auto;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-bar">
+        <span class="badge badge-section">Section 17</span>
+        <span class="badge badge-live"><span class="pulse-dot"></span> Live Worker Engine Online</span>
+        <span class="badge badge-section" id="concurrencyBadge">Workers: 2 Slots</span>
+      </div>
+      <h1>Background Jobs & Worker Queue Architecture</h1>
+      <p class="subtitle">
+        Decouple compute-heavy workloads, handle transient upstream failures with exponential backoff retries, and keep the Express event loop non-blocking.
+      </p>
+    </header>
+
+    <!-- KPI Metric Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Active Workers <span>⚡</span></div>
+        <div class="kpi-value" id="kpiActive">0</div>
+        <div class="kpi-sub" id="kpiActiveSub">0 / 2 slots occupied</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Waiting in Queue <span>⏳</span></div>
+        <div class="kpi-value" id="kpiWaiting">0</div>
+        <div class="kpi-sub">Priority-ordered backlog</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Completed Tasks <span>✅</span></div>
+        <div class="kpi-value" id="kpiCompleted" style="color: #6ee7b7;">0</div>
+        <div class="kpi-sub" id="kpiCompletedRate">100% success rate</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Retries / Failures <span>🔄</span></div>
+        <div class="kpi-value" id="kpiRetries" style="color: #fcd34d;">0</div>
+        <div class="kpi-sub" id="kpiFailedSub">0 permanent failures</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Avg Execution Time <span>⏱️</span></div>
+        <div class="kpi-value" id="kpiAvgTime">0<span style="font-size: 1rem; color: var(--text-muted);">ms</span></div>
+        <div class="kpi-sub">Worker runtime duration</div>
+      </div>
+    </div>
+
+    <!-- Quick Action / Preset Panel -->
+    <div class="action-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🚀</span> Dispatch Demonstration Workloads
+        </div>
+        <div class="btn-group">
+          <button class="btn-outline" id="pauseResumeBtn" onclick="togglePauseQueue()">
+            <span id="pauseIcon">⏸️</span> <span id="pauseText">Pause Queue</span>
+          </button>
+          <button class="btn-outline" onclick="changeConcurrency()">
+            <span>⚙️</span> Set Concurrency
+          </button>
+          <button class="btn-danger" onclick="clearQueue()">
+            <span>🗑️</span> Clear Jobs
+          </button>
+        </div>
+      </div>
+
+      <div class="preset-grid">
+        <div class="preset-card" onclick="dispatchPreset('email')">
+          <div class="preset-title">✉️ Transactional Email</div>
+          <div class="preset-desc">High Priority. Simulates template rendering and SMTP transmission (~1.8s).</div>
+        </div>
+        <div class="preset-card" onclick="dispatchPreset('report')">
+          <div class="preset-title">📊 Multi-step Report</div>
+          <div class="preset-desc">Normal Priority. Heavy data aggregation with 15% ➔ 40% ➔ 70% ➔ 90% progress.</div>
+        </div>
+        <div class="preset-card" onclick="dispatchPreset('image')">
+          <div class="preset-title">🖼️ Media Compression</div>
+          <div class="preset-desc">Low Priority. Resizes image & generates WebP multi-resolution thumbnails.</div>
+        </div>
+        <div class="preset-card" onclick="dispatchPreset('flaky')">
+          <div class="preset-title">🔄 Flaky Gateway Sync</div>
+          <div class="preset-desc">Throws 504 on attempts 1 & 2. Demonstrates exponential backoff and recovery on attempt 3!</div>
+        </div>
+        <div class="preset-card" onclick="dispatchPreset('burst')" style="border-color: rgba(99, 102, 241, 0.4);">
+          <div class="preset-title">⚡ 5-Task Batch Burst</div>
+          <div class="preset-desc">Dispatches 5 mixed-priority jobs simultaneously to watch priority scheduling in action!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Two-Column Layout -->
+    <div class="dashboard-layout">
+      <!-- Left Column: Active & Recent Job Feed -->
+      <div class="card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📋</span> Real-Time Job Queue Table
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="jobCountLabel">Showing 0 jobs</span>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Job ID / Type</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Progress</th>
+                <th>Attempts</th>
+                <th>Runtime</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="jobTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No jobs currently queued. Click one of the workload presets above to start processing!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Event Stream Terminal -->
+      <div class="card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📡</span> Worker Telemetry Log
+          </div>
+          <button class="btn-outline" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" onclick="clearLogs()">Clear</button>
+        </div>
+
+        <div class="log-console" id="logConsole">
+          <div class="log-line">
+            <span class="log-time">[Init]</span>
+            <span class="log-info">Connecting to Server-Sent Events (SSE) telemetry stream...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div class="modal-overlay" id="jobModal" onclick="closeModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="panel-header">
+          <h3 id="modalJobTitle">Job Details</h3>
+          <button class="btn-outline" onclick="closeModal()">✕</button>
+        </div>
+        <pre class="json-view" id="modalJobJson"></pre>
+      </div>
+    </div>
+
+    <footer>
+      Section 17: Background Jobs & Message Queue System • Part of <strong>The Node.js Learning Path</strong>
+    </footer>
+  </div>
+
+  <script>
+    let queueStats = { concurrency: 2, isPaused: false };
+    let jobsList = [];
+    const eventSource = new EventSource('/api/queue/events');
+
+    function appendLog(time, type, message) {
+      const consoleEl = document.getElementById('logConsole');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      const typeClass = type === 'success' ? 'log-success' : type === 'error' ? 'log-error' : type === 'warn' ? 'log-warn' : 'log-info';
+      line.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">${message}</span>`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // Handle SSE events
+    eventSource.addEventListener('init', (e) => {
+      const data = JSON.parse(e.data);
+      updateStats(data.stats);
+      jobsList = data.jobs || [];
+      renderTable();
+      appendLog(new Date().toLocaleTimeString(), 'success', `Connected! Queue has ${data.jobs.length} jobs in history.`);
+    });
+
+    eventSource.addEventListener('job_update', (e) => {
+      const data = JSON.parse(e.data);
+      if (data.stats) updateStats(data.stats);
+      if (data.job) {
+        upsertJob(data.job);
+        renderTable();
+        
+        const now = new Date().toLocaleTimeString();
+        if (data.event === 'enqueued') {
+          appendLog(now, 'info', `Job ${data.job.id} (${data.job.type}) ENQUEUED [Priority: ${data.job.priority.toUpperCase()}]`);
+        } else if (data.event === 'started') {
+          appendLog(now, 'info', `⚡ Worker picked up ${data.job.id} (Attempt ${data.job.attempts})`);
+        } else if (data.event === 'completed') {
+          appendLog(now, 'success', `✅ Job ${data.job.id} COMPLETED in ${data.job.durationMs}ms`);
+        } else if (data.event === 'retrying') {
+          appendLog(now, 'warn', `🔄 Job ${data.job.id} failed. Retrying in ${data.backoffMs}ms (Attempt ${data.nextAttempt}/${data.job.maxAttempts})`);
+        } else if (data.event === 'failed') {
+          appendLog(now, 'error', `❌ Job ${data.job.id} PERMANENTLY FAILED: ${data.job.error}`);
+        }
+      }
+    });
+
+    eventSource.addEventListener('job_progress', (e) => {
+      const data = JSON.parse(e.data);
+      const job = jobsList.find(j => j.id === data.jobId);
+      if (job) {
+        job.progress = data.progress;
+        const row = document.getElementById(`row-${job.id}`);
+        if (row) {
+          const fill = row.querySelector('.progress-fill');
+          const txt = row.querySelector('.progress-text');
+          if (fill) fill.style.width = data.progress + '%';
+          if (txt) txt.textContent = data.progress + '%';
+        }
+      }
+      if (data.message) {
+        appendLog(new Date().toLocaleTimeString(), 'info', `[${data.jobId}] ${data.message} (${data.progress}%)`);
+      }
+    });
+
+    eventSource.addEventListener('queue_state', (e) => {
+      const data = JSON.parse(e.data);
+      if (data.stats) updateStats(data.stats);
+    });
+
+    function upsertJob(job) {
+      const idx = jobsList.findIndex(j => j.id === job.id);
+      if (idx !== -1) {
+        jobsList[idx] = job;
+      } else {
+        jobsList.unshift(job);
+      }
+    }
+
+    function updateStats(stats) {
+      if (!stats) return;
+      queueStats = stats;
+      document.getElementById('kpiActive').textContent = stats.counts.active;
+      document.getElementById('kpiActiveSub').textContent = `${stats.counts.active} / ${stats.concurrency} slots occupied`;
+      document.getElementById('kpiWaiting').textContent = stats.counts.waiting;
+      document.getElementById('kpiCompleted').textContent = stats.metrics.totalCompleted;
+      document.getElementById('kpiRetries').textContent = stats.metrics.totalRetries;
+      document.getElementById('kpiFailedSub').textContent = `${stats.metrics.totalFailed} permanent failures`;
+      document.getElementById('kpiAvgTime').innerHTML = `${stats.metrics.avgProcessingTimeMs}<span style="font-size: 1rem; color: var(--text-muted);">ms</span>`;
+
+      document.getElementById('concurrencyBadge').textContent = `Workers: ${stats.concurrency} Slots`;
+
+      const pauseBtn = document.getElementById('pauseResumeBtn');
+      const pauseIcon = document.getElementById('pauseIcon');
+      const pauseText = document.getElementById('pauseText');
+      if (stats.isPaused) {
+        pauseIcon.textContent = '▶️';
+        pauseText.textContent = 'Resume Queue';
+        pauseBtn.className = 'btn-warning';
+      } else {
+        pauseIcon.textContent = '⏸️';
+        pauseText.textContent = 'Pause Queue';
+        pauseBtn.className = 'btn-outline';
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('jobTableBody');
+      document.getElementById('jobCountLabel').textContent = `Showing ${jobsList.length} jobs`;
+
+      if (jobsList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+              No jobs currently queued. Click one of the workload presets above to start processing!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = jobsList.map(j => {
+        const priorityClass = `priority-${j.priority || 'normal'}`;
+        const statusClass = `status-${j.status}`;
+        const durationText = j.durationMs ? `${j.durationMs}ms` : (j.status === 'ACTIVE' ? 'Running...' : '-');
+
+        return `
+          <tr id="row-${j.id}">
+            <td>
+              <div style="font-weight: 700; color: #fff;">${j.type}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${j.id}</div>
+            </td>
+            <td><span class="priority-badge ${priorityClass}">${j.priority}</span></td>
+            <td><span class="status-badge ${statusClass}">${j.status}</span></td>
+            <td>
+              <div class="progress-bar-wrap">
+                <div class="progress-fill" style="width: ${j.progress || 0}%;"></div>
+              </div>
+              <span class="progress-text" style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">${j.progress || 0}%</span>
+            </td>
+            <td style="font-family: 'JetBrains Mono'; font-size: 0.75rem;">${j.attempts} / ${j.maxAttempts}</td>
+            <td style="font-family: 'JetBrains Mono'; font-size: 0.75rem;">${durationText}</td>
+            <td>
+              <button class="btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.72rem;" onclick="viewJobDetails('${j.id}')">View</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Action calls
+    async function dispatchPreset(preset) {
+      if (preset === 'burst') {
+        appendLog(new Date().toLocaleTimeString(), 'info', '⚡ Firing 5-task demonstration burst...');
+        await fetch('/api/jobs/demo-batch', { method: 'POST' });
+        return;
+      }
+
+      let payload = {};
+      if (preset === 'email') {
+        payload = {
+          type: 'EMAIL_NOTIFICATION',
+          priority: 'high',
+          data: { recipient: 'user_' + Math.floor(Math.random() * 900 + 100) + '@example.com', template: 'welcome' }
+        };
+      } else if (preset === 'report') {
+        payload = {
+          type: 'REPORT_GENERATION',
+          priority: 'normal',
+          data: { reportType: 'Quarterly Audit Q4', format: 'PDF' }
+        };
+      } else if (preset === 'image') {
+        payload = {
+          type: 'IMAGE_OPTIMIZATION',
+          priority: 'low',
+          data: { filename: 'product_photo_' + Date.now() + '.png', quality: 85 }
+        };
+      } else if (preset === 'flaky') {
+        payload = {
+          type: 'UNSTABLE_PAYMENT_SYNC',
+          priority: 'normal',
+          data: { transactionId: 'TXN-' + Math.floor(Math.random() * 899999 + 100000) }
+        };
+      }
+
+      await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    async function togglePauseQueue() {
+      const endpoint = queueStats.isPaused ? '/api/queue/resume' : '/api/queue/pause';
+      await fetch(endpoint, { method: 'POST' });
+    }
+
+    async function changeConcurrency() {
+      const current = queueStats.concurrency || 2;
+      const next = prompt('Enter concurrent worker slots (1 to 10):', current);
+      if (next) {
+        await fetch('/api/queue/concurrency', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ concurrency: parseInt(next, 10) })
+        });
+      }
+    }
+
+    async function clearQueue() {
+      if (confirm('Clear all jobs and logs from queue memory?')) {
+        await fetch('/api/queue/clear?type=all', { method: 'DELETE' });
+        jobsList = [];
+        renderTable();
+        appendLog(new Date().toLocaleTimeString(), 'warn', '🗑️ Queue cleared.');
+      }
+    }
+
+    function viewJobDetails(id) {
+      const job = jobsList.find(j => j.id === id);
+      if (!job) return;
+      document.getElementById('modalJobTitle').textContent = `Job: ${job.id}`;
+      document.getElementById('modalJobJson').textContent = JSON.stringify(job, null, 2);
+      document.getElementById('jobModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('jobModal').style.display = 'none';
+    }
+
+    function clearLogs() {
+      document.getElementById('logConsole').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

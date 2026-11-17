@@ -28,6 +28,7 @@
     "example:esm": "node 14-ES-Modules-ESM/index.js",
     "start:graphql": "node 15-GraphQL-Integration/server.js",
     "start:cache": "node 16-Caching-Strategies/server.js",
+    "start:queue": "node 17-Background-Jobs-Queues/server.js",
     "test": "jest"
   },
   "author": "",

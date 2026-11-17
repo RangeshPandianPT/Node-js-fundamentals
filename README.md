@@ -85,6 +85,7 @@ The repository is organized into directories, each corresponding to a fundamenta
 | `14-ES-Modules-ESM` | **Modern JS Modules** | Modern `import`/`export` syntax, top-level `await`, dynamic imports, recreating `__dirname`. |
 | `15-GraphQL-Integration` | **GraphQL APIs** | Setting up **Apollo Server**, typed schemas (`typeDefs`), and data **resolvers**. |
 | `16-Caching-Strategies` | **Performance & Caching** | Cache-Aside pattern, **Redis**, in-memory fallback, TTL expiration, proactive invalidation. |
+| `17-Background-Jobs-Queues` | **Async Task Queues** | Producer-Consumer pattern, priority scheduling, concurrency throttling, exponential backoff retries, Server-Sent Events (SSE). |
 
 -----
 
@@ -110,6 +111,7 @@ node-js-fundamentals/
 ├── 14-ES-Modules-ESM/         # Modern ES Modules (type: module), top-level await demo
 ├── 15-GraphQL-Integration/    # Apollo Server Express setup, schemas, and resolvers
 ├── 16-Caching-Strategies/     # Cache-Aside pattern, Redis & memory fallback, live dashboard
+├── 17-Background-Jobs-Queues/ # Producer-consumer job queue, priority scheduling, and live SSE dashboard
 ├── uploads/                   # Uploaded media storage directory
 ├── logs/                      # Winston error and combined log files
 ├── index.js                   # Demo runner for basic fundamentals
@@ -128,7 +130,7 @@ You can run any module or start any production server using the built-in npm scr
 npm test
 ```
 
-### 🚀 Launch Production Servers (Sections 10–16)
+### 🚀 Launch Production Servers (Sections 10–17)
 ```bash
 # Section 10: Real-Time WebSocket Hub (http://localhost:3001)
 npm run start:realtime
@@ -153,6 +155,9 @@ npm run start:graphql
 
 # Section 16: Caching Strategies & Live Telemetry (http://localhost:3006)
 npm run start:cache
+
+# Section 17: Background Job Queues & Live SSE Dashboard (http://localhost:3007)
+npm run start:queue
 ```
 
 ### 📚 Run Basic Learning Examples
